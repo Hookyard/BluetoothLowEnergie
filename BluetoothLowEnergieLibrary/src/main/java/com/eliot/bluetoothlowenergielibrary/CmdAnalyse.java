@@ -3,11 +3,11 @@ package com.eliot.bluetoothlowenergielibrary;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Cmd_analyse {
+public class CmdAnalyse {
     private String dataStr = "";
     private Pattern patternData;
 
-    public Cmd_analyse() {
+    public CmdAnalyse() {
         patternData = Pattern.compile("(\\n>$)");
     }
 

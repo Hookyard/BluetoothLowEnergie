@@ -15,7 +15,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.util.Log;
 
-import com.eliot.bluetoothlowenergielibrary.Cmd_connect;
+import com.eliot.bluetoothlowenergielibrary.CmdConnect;
 import com.eliot.bluetoothlowenergielibrary.Interface.SerialListener;
 
 import java.io.IOException;
@@ -163,12 +163,12 @@ public class SerialSocket extends BluetoothGattCallback {
             gatt.getDevice().getName();
             // ma modif -->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Cmd_connect.instance.setDeviceName(gatt.getDevice().getName());
+                CmdConnect.instance.setDeviceName(gatt.getDevice().getName());
             }
         } else {
             Log.d(TAG, "connectGatt,LE");
             gatt = device.connectGatt(context, false, this, BluetoothDevice.TRANSPORT_LE);
-            Cmd_connect.instance.setDeviceName(gatt.getDevice().getName());
+            CmdConnect.instance.setDeviceName(gatt.getDevice().getName());
         }
         if (gatt == null)
             throw new IOException("connectGatt failed");

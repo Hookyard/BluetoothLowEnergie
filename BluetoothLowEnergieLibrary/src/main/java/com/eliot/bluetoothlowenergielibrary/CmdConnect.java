@@ -1,19 +1,18 @@
 package com.eliot.bluetoothlowenergielibrary;
 
-import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-
-import com.eliot.bluetoothlowenergielibrary.App.App;
 import com.eliot.bluetoothlowenergielibrary.Interface.SerialListener;
+import com.eliot.bluetoothlowenergielibrary.Receiver.BluetoothStateChangedReceiver;
+import com.eliot.bluetoothlowenergielibrary.Receiver.CheckConnectionReceiver;
 import com.eliot.bluetoothlowenergielibrary.Serial.SerialService;
 import com.eliot.bluetoothlowenergielibrary.Serial.SerialSocket;
 
@@ -22,34 +21,36 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class Cmd_connect implements ServiceConnection, SerialListener {
-    public final static Cmd_connect instance = new Cmd_connect();
+public class CmdConnect implements ServiceConnection, SerialListener {
+    public final static CmdConnect instance = new CmdConnect();
     private SerialSocket serialSocket = null;
     private BluetoothDevice bluetoothDevice;
     private String deviceName = "";
     private SerialService serialService;
     private ArrayList<byte[]> dataList;
-    private Thread automaticReconnectionThread;
     private Handler handler = new Handler();
     private Vector<String> filter = new Vector<>();
     private ConnectedState connectedState = ConnectedState.NOT_CONNECTED;
     private String test = "";
     private Context context, contextActivity;
+    private BluetoothStateChangedReceiver bluetoothStateChangedReceiver = new BluetoothStateChangedReceiver();
+    private CheckConnectionReceiver checkConnectionReceiver = new CheckConnectionReceiver();
 
     private enum ConnectedState {
         CONNECTED, NOT_CONNECTED
     }
 
-    public Cmd_connect() {
+    public CmdConnect() {
         dataList = new ArrayList<>();
+        enableBlueooth();
     }
 
     public SerialSocket getSocket() {
         return serialSocket;
     }
 
-    public void setSocket(Context context, BluetoothDevice bluetoothDevice) {
-        serialSocket = new SerialSocket(context, bluetoothDevice);
+    public void setSerialSocket(SerialSocket socket) {
+        this.serialSocket = socket;
     }
 
     public void startService(Intent intent) {
@@ -70,6 +71,52 @@ public class Cmd_connect implements ServiceConnection, SerialListener {
         serialService.write("test".getBytes(StandardCharsets.UTF_8));
     }
 
+    //Permet de démarrer le bluetooth au démarrage de l'application
+    public void enableBlueooth() {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(enableBtIntent);
+        }
+    }
+
+    //Envoie d'un message pour demander a l'utilisateur d'utiliser le bluetooth si celui-ci le désactive
+    public void startBluetoothIfChangesAppear(Context context) {
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        context.registerReceiver(bluetoothStateChangedReceiver, filter);
+    }
+
+    public void stopBluetoothIfChangesAppear(Context context) {
+        context.unregisterReceiver(bluetoothStateChangedReceiver);
+    }
+
+    public void automaticRebootOfConnection() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                handler.postDelayed(this, 5000);
+                try {
+                    if(serialSocket != null) {
+                        serialService.connect(serialSocket);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
+    }
+
+    public void filterCheckConnection(Context context) {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        context.registerReceiver(checkConnectionReceiver, filter);
+    }
+
     @Override
     public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
         System.out.println("//TestOnServiceConnected");
@@ -87,7 +134,6 @@ public class Cmd_connect implements ServiceConnection, SerialListener {
     @Override
     public void onSerialConnect() {
         connectedState = ConnectedState.CONNECTED;
-
         System.out.println(("//ConnectedState " + connectedState));
     }
 
@@ -95,8 +141,12 @@ public class Cmd_connect implements ServiceConnection, SerialListener {
     public void onSerialConnectError(Exception e) {
         connectedState = ConnectedState.NOT_CONNECTED;
         serialService.disconnect();
+        System.out.println("//ErrorConnect " + connectedState);
+        while (connectedState != ConnectedState.CONNECTED)
+        CmdConnect.instance.automaticRebootOfConnection();
     }
 
+    //Reception des données envoyés par l'uc
     @Override
     public void onSerialRead(byte[] data) {
         dataList.add(data);
@@ -111,6 +161,9 @@ public class Cmd_connect implements ServiceConnection, SerialListener {
     @Override
     public void onSerialIoError(Exception e) {
         serialService.disconnect();
+        System.out.println("//ErrorConnect " + connectedState);
+        while (connectedState != ConnectedState.CONNECTED)
+            CmdConnect.instance.automaticRebootOfConnection();
     }
 
     /*<------------------------------------Getter and Setter--------------------------------------->*/
@@ -142,7 +195,7 @@ public class Cmd_connect implements ServiceConnection, SerialListener {
         return serialService;
     }
 
-    public Cmd_connect getInstance() {
+    public CmdConnect getInstance() {
         return instance;
     }
 

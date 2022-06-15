@@ -2,12 +2,12 @@ package com.eliot.bluetoothlowenergielibrary;
 
 import java.util.ArrayList;
 
-public class Cmd_rcv {
+public class CmdRcv {
     private ArrayList<String> dataList;
     private int maxSize = 1000;
     private String strTest = "";
 
-    public Cmd_rcv(String data) {
+    public CmdRcv(String data) {
         dataList.add(data);
     }
 
