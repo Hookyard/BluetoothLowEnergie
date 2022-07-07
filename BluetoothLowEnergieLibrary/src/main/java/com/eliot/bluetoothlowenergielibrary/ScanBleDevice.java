@@ -35,7 +35,7 @@ public class ScanBleDevice {
 
     private static final long SCAN_PERIOD = 10000;
 
-    public ScanBleDevice(Context context) {
+    public ScanBleDevice() {
 
 
         patternFilter = Pattern.compile("uc201");

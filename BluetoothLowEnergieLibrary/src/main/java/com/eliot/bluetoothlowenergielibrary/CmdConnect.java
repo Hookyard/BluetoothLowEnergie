@@ -45,6 +45,7 @@ public class CmdConnect implements ServiceConnection, SerialListener {
     private boolean bluetoothEnable;
     private int cntAttempt = 0;
     private int testReboot = 0;
+    private int maxCharacterNumber = 1000;
     private long minThreadSleep, maxThreadSleep;
     private ArrayList<BluetoothDevice> bluetoothDeviceArrayList;
     private CmdAnalyse cmdAnalyse;
@@ -145,8 +146,9 @@ public class CmdConnect implements ServiceConnection, SerialListener {
         this.maxThreadSleep = 5000;
     }
 
-    public void startService(Intent intent) {
+    public void startService(Intent intent, Context applicationContext) {
         System.out.println("//Context + " + context);
+        this.context = applicationContext;
         try {
             if (serialService == null) {
                 context.bindService(intent, this, Context.BIND_AUTO_CREATE);
