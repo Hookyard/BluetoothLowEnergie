@@ -16,7 +16,6 @@ import android.os.Looper;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.eliot.bluetoothlowenergielibrary.CmdConnect;
 import com.eliot.bluetoothlowenergielibrary.Interface.SerialListener;
 
 import java.io.IOException;
@@ -82,7 +81,7 @@ public class SerialService extends Service implements SerialListener {
         socket.connect(this);
         this.socket = socket;
         connected = true;
-        CmdConnect.instance.setSerialSocket(socket);
+
     }
 
     public void disconnect() {

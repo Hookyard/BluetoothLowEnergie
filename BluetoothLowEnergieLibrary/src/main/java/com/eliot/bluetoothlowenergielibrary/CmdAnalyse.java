@@ -11,13 +11,17 @@ public class CmdAnalyse {
         patternData = Pattern.compile("(\\n>$)");
     }
 
-    public void start(String str) {
-        dataStr += str;
+    public void start(String dataReceived) {
+        dataStr += dataReceived;
 
         Matcher matcher = patternData.matcher(dataStr);
         if (matcher.find()) {
             dataStr.replaceAll("(?m)^[ \t]*\r?\n", "");
+            CmdConnect.getInstance().getStringDataReceivedList().add(dataStr);
             dataStr = "";
+            for (int i = 0; i < CmdConnect.getInstance().getStringDataReceivedList().size(); i++) {
+                /*int numberOfCharaclist =  */
+            }
         }
     }
 

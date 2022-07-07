@@ -19,6 +19,7 @@ import com.eliot.bluetoothlowenergielibrary.CmdConnect;
 import com.eliot.bluetoothlowenergielibrary.Interface.SerialListener;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,7 +109,7 @@ public class SerialSocket extends BluetoothGattCallback {
         };
     }
 
-    String getName() {
+    public String getName() {
         return device.getName() != null ? device.getName() : device.getAddress();
     }
 
@@ -160,15 +161,15 @@ public class SerialSocket extends BluetoothGattCallback {
         if (Build.VERSION.SDK_INT < 23) {
             Log.d(TAG, "connectGatt");
             gatt = device.connectGatt(context, false, this);
-            gatt.getDevice().getName();
+            /*gatt.getDevice().getName();*/
             // ma modif -->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                CmdConnect.instance.setDeviceName(gatt.getDevice().getName());
+                CmdConnect.getInstance().setDeviceName(gatt.getDevice().getName());
             }
         } else {
             Log.d(TAG, "connectGatt,LE");
             gatt = device.connectGatt(context, false, this, BluetoothDevice.TRANSPORT_LE);
-            CmdConnect.instance.setDeviceName(gatt.getDevice().getName());
+            CmdConnect.getInstance().setDeviceName(gatt.getDevice().getName());
         }
         if (gatt == null)
             throw new IOException("connectGatt failed");
@@ -359,6 +360,7 @@ public class SerialSocket extends BluetoothGattCallback {
         synchronized (writeBuffer) {
             if(data.length <= payloadSize) {
                 data0 = data;
+                System.out.println("//Bytes " + new String(data0, StandardCharsets.UTF_8));
             } else {
                 data0 = Arrays.copyOfRange(data, 0, payloadSize);
             }
@@ -406,7 +408,7 @@ public class SerialSocket extends BluetoothGattCallback {
         }
     }
 
-    private void writeNext() {
+    public void writeNext() {
         final byte[] data;
         synchronized (writeBuffer) {
             if (!writeBuffer.isEmpty() && delegate.canWrite()) {
