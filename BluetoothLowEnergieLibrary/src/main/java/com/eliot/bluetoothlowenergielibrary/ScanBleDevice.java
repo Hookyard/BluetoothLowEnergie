@@ -1,22 +1,12 @@
 package com.eliot.bluetoothlowenergielibrary;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Handler;
-import android.widget.ArrayAdapter;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-
-import com.eliot.bluetoothlowenergielibrary.Interface.BluetoothDeviceListListener;
-
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,21 +21,21 @@ public class ScanBleDevice {
     private Boolean booleanFilter;
     private boolean scanning;
 
-    private BluetoothDeviceListListener callBack;
-
     private static final long SCAN_PERIOD = 10000;
 
     public ScanBleDevice() {
-
-
         patternFilter = Pattern.compile("uc201");
-
         bluetoothDeviceList = new HashSet<BluetoothDevice>();
-
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+    }
 
-        callBack = null;
+    public Boolean getScanning() {
+        return this.scanning;
+    }
+
+    public void setScanning(Boolean scanning) {
+        this.scanning = scanning;
     }
 
     public void scanLeDevice() {
@@ -54,17 +44,13 @@ public class ScanBleDevice {
                 @Override
                 public void run() {
                     scanning = false;
-                    /*bluetoothAdapter.stopLeScan(leScanCallback);*/
                     bluetoothLeScanner.stopScan(leScanCallback);
                 }
             }, SCAN_PERIOD);
-
             scanning = true;
-            /*bluetoothAdapter.startLeScan(leScanCallback);*/
             bluetoothLeScanner.startScan(leScanCallback);
         } else {
             scanning = false;
-            /*bluetoothAdapter.stopLeScan(leScanCallback);*/
             bluetoothLeScanner.stopScan(leScanCallback);
         }
     }
@@ -72,7 +58,6 @@ public class ScanBleDevice {
     public void stopLeScan() {
         if (scanning == true) {
             scanning = false;
-            /*bluetoothAdapter.stopLeScan(leScanCallback);*/
             bluetoothLeScanner.stopScan(leScanCallback);
         }
     }
@@ -89,28 +74,9 @@ public class ScanBleDevice {
                     System.out.println("//Reussi + " + result.getDevice().getName());
                 }
             }
-            /*bluetoothDeviceList.add(result.getDevice());*/
         }
-
-
-
-    /*private BluetoothAdapter.LeScanCallback leScanCallback = (bluetoothDevice, i, bytes) -> {
-        if (bluetoothDevice.getName() != null) {
-            matcherFilter = patternFilter.matcher(bluetoothDevice.getName());
-            booleanFilter = matcherFilter.find();
-            if (booleanFilter) {
-                bluetoothDeviceList.add(bluetoothDevice);
-                System.out.println("//Reussi + " + bluetoothDevice.getName());
-            }
-        }*/
     };
 
-    /*private void setBluetoothDeviceListlistener(BluetoothDeviceListListener callBack) {
-        this.callBack = callBack;
-        if (callBack != null) {
-
-        }
-    }*/
     public HashSet<BluetoothDevice> getBluetoothDeviceList() {
         return bluetoothDeviceList;
     }

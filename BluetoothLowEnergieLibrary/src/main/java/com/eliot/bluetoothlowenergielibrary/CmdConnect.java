@@ -9,12 +9,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.eliot.bluetoothlowenergielibrary.Interface.BluetoothDeviceListListener;
 import com.eliot.bluetoothlowenergielibrary.Interface.SerialListener;
 import com.eliot.bluetoothlowenergielibrary.Receiver.BluetoothStateChangedReceiver;
 import com.eliot.bluetoothlowenergielibrary.Receiver.CheckConnectionReceiver;
@@ -34,32 +32,34 @@ public class CmdConnect implements ServiceConnection, SerialListener {
     private String deviceName = "";
     private SerialService serialService;
     private ArrayList<byte[]> dataList;
-    private Handler handler = new Handler();
     private Vector<String> filter = new Vector<>();
     private ConnectedState connectedState = ConnectedState.NOT_CONNECTED;
     private String dataStr = "";
     private Context context, applicationContext;
     private BluetoothStateChangedReceiver bluetoothStateChangedReceiver = new BluetoothStateChangedReceiver();
     private CheckConnectionReceiver checkConnectionReceiver = new CheckConnectionReceiver();
-    private byte[] testBytes;
     private boolean bluetoothEnable;
     private int cntAttempt = 0;
-    private int testReboot = 0;
-    private int maxCharacterNumber = 1000;
     private long minThreadSleep, maxThreadSleep;
     private ArrayList<BluetoothDevice> bluetoothDeviceArrayList;
     private CmdAnalyse cmdAnalyse;
 
-    private ArrayList<byte[]> byteDataReceivedList;
     private ArrayList<String> stringDataReceivedList;
 
     private Thread threadRebootAttempt;
     private Boolean threadRebootAttemptOn = false;
 
-    private BluetoothDeviceListListener callBack;
-
     public enum ConnectedState {
         CONNECTED, NOT_CONNECTED
+    }
+
+    public CmdConnect() {
+        this.dataList = new ArrayList<>();
+        this.bluetoothDeviceArrayList = new ArrayList<>();
+        this.stringDataReceivedList = new ArrayList<>();
+        this.cmdAnalyse = new CmdAnalyse();
+        this.minThreadSleep = 1000;
+        this.maxThreadSleep = 5000;
     }
 
     /*<------------------------------------Getter and Setter--------------------------------------->*/
@@ -135,20 +135,9 @@ public class CmdConnect implements ServiceConnection, SerialListener {
         this.serialSocket = socket;
     }
 
-    public CmdConnect() {
-        this.dataList = new ArrayList<>();
-        this.bluetoothDeviceArrayList = new ArrayList<>();
-        this.byteDataReceivedList = new ArrayList<>();
-        this.stringDataReceivedList = new ArrayList<>();
-        this.cmdAnalyse = new CmdAnalyse();
-        this.callBack = null;
-        this.minThreadSleep = 1000;
-        this.maxThreadSleep = 5000;
-    }
-
     public void startService(Intent intent, Context applicationContext) {
-        System.out.println("//Context + " + context);
         this.context = applicationContext;
+        System.out.println("//Context + " + context);
         try {
             if (serialService == null) {
                 context.bindService(intent, this, Context.BIND_AUTO_CREATE);
@@ -240,7 +229,7 @@ public class CmdConnect implements ServiceConnection, SerialListener {
                 }
                 if (cntAttempt >= 3 && connectedState == ConnectedState.NOT_CONNECTED) {
                     System.out.println("//cntAttemptError " + cntAttempt);
-                    threadRebootAttempt.currentThread().interrupt();
+                    threadRebootAttempt.interrupt();
                     cntAttempt = 0;
                 }
                 if (connectedState == ConnectedState.CONNECTED) {
@@ -292,10 +281,6 @@ public class CmdConnect implements ServiceConnection, SerialListener {
         connectedState = ConnectedState.NOT_CONNECTED;
         Toast.makeText(context, "device is disconnected", Toast.LENGTH_SHORT).show();
         System.out.println("//ErrorConnect " + connectedState);
-        /*while (connectedState != ConnectedState.CONNECTED) {
-            System.out.println("//TestBoucleWhile");
-            rebootAttempt();
-        }*/
     }
 
     //Reception des données envoyés par l'uc sous forme de tableau de byte
@@ -306,9 +291,6 @@ public class CmdConnect implements ServiceConnection, SerialListener {
         dataStr = new String(data, StandardCharsets.UTF_8);
         System.out.println("//Data " + dataStr);
         cmdAnalyse.start(dataStr);
-        /*for(int i = 0; i < dataList.size(); i++){
-            dataList.get(i);
-        }*/
     }
 
     public void sendCommand(byte[] data) {
@@ -326,9 +308,5 @@ public class CmdConnect implements ServiceConnection, SerialListener {
         connectedState = ConnectedState.NOT_CONNECTED;
         System.out.println("//ErrorConnect " + connectedState);
         rebootAttempt();
-    }
-
-    public void setBluetoothListListener(BluetoothDeviceListListener callBack) {
-
     }
 }
